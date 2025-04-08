@@ -1,0 +1,52 @@
+name: Compile Xiaomi Kernel
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Clone Xiaomi Kernel OpenSource repository
+      run: |
+        git clone https://github.com/MiCode/Xiaomi_Kernel_OpenSource.git
+        cd Xiaomi_Kernel_OpenSource
+        git checkout dandelion-q-oss
+
+    - name: Set up build environment
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gcc-aarch64-linux-gnu bc bison flex libssl-dev make
+
+    - name: Set up cross-compilation toolchain
+      run: |
+        wget https://releases.linaro.org/components/toolchain/binaries/latest-7/aarch64-linux-gnu/gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu.tar.xz
+        tar -xf gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu.tar.xz
+        export PATH=$PATH:$(pwd)/gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu/bin
+
+    - name: Configure the kernel
+      run: |
+        cd Xiaomi_Kernel_OpenSource
+        make ARCH=arm64 dandelion_defconfig
+
+    - name: Compile the kernel
+      run: |
+        cd Xiaomi_Kernel_OpenSource
+        make ARCH=arm64 CROSS_COMPILE=$(pwd)/gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu- -j$(nproc)
+
+    - name: Archive build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: kernel-build
+        path: |
+          Xiaomi_Kernel_OpenSource/arch/arm64/boot/Image.gz-dtb
+          # Add other artifacts you want to keep
