@@ -31,6 +31,7 @@ jobs:
         wget https://releases.linaro.org/components/toolchain/binaries/latest-7/aarch64-linux-gnu/gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu.tar.xz
         tar -xf gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu.tar.xz
         export PATH=$PATH:$(pwd)/gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu/bin
+        ls -l $(pwd)/gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu/bin  # List the directory to ensure binaries are present
 
     - name: Configure the kernel
       run: |
@@ -40,7 +41,7 @@ jobs:
     - name: Compile the kernel
       run: |
         cd Xiaomi_Kernel_OpenSource
-        make ARCH=arm64 CROSS_COMPILE=$(pwd)/gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu- -j$(nproc)
+        make ARCH=arm64 CROSS_COMPILE=$(pwd)/../gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu- -j$(nproc)
 
     - name: Archive build artifacts
       uses: actions/upload-artifact@v4
