@@ -37,6 +37,11 @@ jobs:
       run: |
         find Xiaomi_Kernel_OpenSource -name "DrvGen.py" -exec sed -i 's/print \(.*\)/print(\1)/' {} \;
 
+    - name: Fix multiple definition of yylloc
+      run: |
+        find Xiaomi_Kernel_OpenSource -name "*.lex" -exec sed -i 's/YYLTYPE yylloc;/extern YYLTYPE yylloc;/' {} \;
+        find Xiaomi_Kernel_OpenSource -name "*.tab.c" -exec sed -i 's/YYLTYPE yylloc;/extern YYLTYPE yylloc;/' {} \;
+
     - name: Configure the kernel
       run: |
         cd Xiaomi_Kernel_OpenSource
