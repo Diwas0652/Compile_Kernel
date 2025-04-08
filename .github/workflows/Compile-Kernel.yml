@@ -18,9 +18,8 @@ jobs:
 
     - name: Clone Xiaomi Kernel OpenSource repository
       run: |
-        git clone https://github.com/MiCode/Xiaomi_Kernel_OpenSource.git
+        git clone --single-branch --branch dandelion-q-oss https://github.com/MiCode/Xiaomi_Kernel_OpenSource.git
         cd Xiaomi_Kernel_OpenSource
-        git checkout dandelion-q-oss
 
     - name: Set up build environment
       run: |
