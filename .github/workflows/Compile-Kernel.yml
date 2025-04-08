@@ -33,6 +33,10 @@ jobs:
         export PATH=$PATH:$(pwd)/gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu/bin
         ls -l $(pwd)/gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu/bin  # List the directory to ensure binaries are present
 
+    - name: Fix Python Syntax in DrvGen.py
+      run: |
+        find Xiaomi_Kernel_OpenSource -name "DrvGen.py" -exec sed -i 's/print \(.*\)/print(\1)/' {} \;
+
     - name: Configure the kernel
       run: |
         cd Xiaomi_Kernel_OpenSource
