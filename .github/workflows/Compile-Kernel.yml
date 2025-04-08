@@ -1,4 +1,4 @@
-name: Compile Xiaomi Kernel
+name: Compile Kernel
 
 on:
   push:
@@ -16,46 +16,43 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Clone Xiaomi Kernel OpenSource repository
-      run: |
-        git clone --single-branch --branch dandelion-q-oss https://github.com/MiCode/Xiaomi_Kernel_OpenSource.git
-        cd Xiaomi_Kernel_OpenSource
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
 
-    - name: Set up build environment
+    - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y gcc-aarch64-linux-gnu bc bison flex libssl-dev make
+        sudo apt-get install -y build-essential libncurses-dev bison flex libssl-dev libelf-dev python3
 
-    - name: Set up cross-compilation toolchain
+    - name: Clone Kernel Source
       run: |
-        wget https://releases.linaro.org/components/toolchain/binaries/latest-7/aarch64-linux-gnu/gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu.tar.xz
-        tar -xf gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu.tar.xz
-        export PATH=$PATH:$(pwd)/gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu/bin
-        ls -l $(pwd)/gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu/bin  # List the directory to ensure binaries are present
+        git clone https://github.com/Diwas0652/Compile_Kernel.git
+        cd Compile_Kernel
 
-    - name: Fix Python Syntax in DrvGen.py
+    - name: Configure Kernel
       run: |
-        find Xiaomi_Kernel_OpenSource -name "DrvGen.py" -exec sed -i 's/print \(.*\)/print(\1)/' {} \;
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- dandelion_defconfig
 
-    - name: Fix multiple definition of yylloc
+    - name: Build Kernel
       run: |
-        find Xiaomi_Kernel_OpenSource -name "*.lex" -exec sed -i 's/YYLTYPE yylloc;/extern YYLTYPE yylloc;/' {} \;
-        find Xiaomi_Kernel_OpenSource -name "*.tab.c" -exec sed -i 's/YYLTYPE yylloc;/extern YYLTYPE yylloc;/' {} \;
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j$(nproc)
 
-    - name: Configure the kernel
+    - name: Check for Syntax Errors
       run: |
-        cd Xiaomi_Kernel_OpenSource
-        make ARCH=arm64 dandelion_defconfig
+        python3 -m py_compile tools/dct/DrvGen.py || exit 1
 
-    - name: Compile the kernel
+    - name: Check for Multiple Definitions
       run: |
-        cd Xiaomi_Kernel_OpenSource
-        make ARCH=arm64 CROSS_COMPILE=$(pwd)/../gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu- -j$(nproc)
+        grep -r 'yylloc' scripts/dtc/ || exit 1
 
-    - name: Archive build artifacts
+    - name: Package Kernel
+      run: |
+        tar -czf kernel.tar.gz arch/arm64/boot/Image
+
+    - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: kernel-build
-        path: |
-          Xiaomi_Kernel_OpenSource/arch/arm64/boot/Image.gz-dtb
-          # Add other artifacts you want to keep
+        name: compiled-kernel
+        path: kernel.tar.gz
